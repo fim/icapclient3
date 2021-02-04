@@ -200,10 +200,10 @@ py_conn_build_respmod_http_headers(void)
 }
 
 static ci_headers_list_t *
-py_conn_build_reqmod_http_headers(char const *url)
+py_conn_build_reqmod_http_headers(char const *method, char const *url)
 {
     char *line = NULL;
-    int ret = asprintf(&line, "POST %s HTTP/1.1", url);
+    int ret = asprintf(&line, "%s %s HTTP/1.1", method, url);
     if(ret <= -1 || line == NULL)
     {
         return NULL;
@@ -260,6 +260,7 @@ py_conn_request(PyICAPConnection *conn, PyObject *args, PyObject *kwds)
     char *type = NULL;
     char *filename = NULL;
     char *service = ICAP_DEFAULT_SERVICE;
+    char *method = "POST";
     char *url = "/";
     int timeout = ICAP_DEFAULT_TIMEOUT;
     int read_content = 1;
@@ -268,10 +269,10 @@ py_conn_request(PyICAPConnection *conn, PyObject *args, PyObject *kwds)
     ci_headers_list_t *req_headers = NULL;
     ci_headers_list_t *resp_headers = NULL;
 
-    static char *kwlist[] = { "type", "filename", "url", "service", "timeout", "read_content", "allow_204", NULL };
+    static char *kwlist[] = { "type", "filename", "url", "method", "service", "timeout", "read_content", "allow_204", NULL };
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "s|zssiip:request", kwlist,
-                    &type, &filename, &url, &service, &timeout, &read_content, &allow_204))
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "s|zsssiip:request", kwlist,
+                    &type, &filename, &url, &method, &service, &timeout, &read_content, &allow_204))
     {
         goto py_conn_request_error;
     }
@@ -281,6 +282,14 @@ py_conn_request(PyICAPConnection *conn, PyObject *args, PyObject *kwds)
     if(strcmp(type, "REQMOD") != 0 && strcmp(type, "RESPMOD") != 0)
     {
         PyErr_SetString(PyExc_ValueError, "Request type should be either 'REQMOD' or 'RESPMOD'");
+        goto py_conn_request_error;
+    }
+
+    if(strcmp(method, "GET") != 0 && strcmp(method, "HEAD" && strcmp(method, "POST") != 0 &&
+        strcmp(method, "PUT") != 0 && strcmp(method, "DELETE" && strcmp(method, "CONNECT") != 0 &&
+        strcmp(method, "OPTINS") != 0 && strcmp(method, "TRACE" && strcmp(method, "PATCH") != 0)
+    {
+        PyErr_SetString(PyExc_ValueError,"Request method should be a valid HTTP method");
         goto py_conn_request_error;
     }
 
@@ -333,7 +342,7 @@ py_conn_request(PyICAPConnection *conn, PyObject *args, PyObject *kwds)
     // Configure 204 allow/disallow
     conn->req->allow204 = allow_204;
 
-    req_headers = py_conn_build_reqmod_http_headers(url);
+    req_headers = py_conn_build_reqmod_http_headers(method, url);
     if(req_headers == NULL)
     {
         PyErr_SetString(PyICAP_Exc, "Cannot create the ICAP HTTP request headers");
