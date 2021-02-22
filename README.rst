@@ -49,6 +49,8 @@ Installation
        apt-get install python-dev
        # install the C-ICAP API
        apt-get install libicapapi-dev
+       # install libssl-dev package
+       apt-get install libssl-dev
 
 2. Build the library, as a normal user
 
